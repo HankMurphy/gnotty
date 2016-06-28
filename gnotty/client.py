@@ -5,6 +5,7 @@ from hashlib import md5
 from irc.client import SimpleIRCClient, ServerConnectionError
 
 from gnotty.conf import settings
+import collections
 
 
 def color(nickname):
@@ -42,7 +43,7 @@ class BaseIRCClient(SimpleIRCClient, object):
             return False
 
     def _dispatcher(self, connection, event):
-        if not callable(event.arguments):
+        if not isinstance(event.arguments, collections.Callable):
             # irclib decided to change the event API, so here
             # we make it backward compatible.
             arguments = event.arguments

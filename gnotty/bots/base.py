@@ -32,9 +32,9 @@ class BaseBot(BaseIRCClient):
                     yield base
                     for base in all_bases(base.__bases__):
                         yield base
-            base_values = [b.__dict__.values() for b in set(all_bases(bases))]
+            base_values = [list(b.__dict__.values()) for b in set(all_bases(bases))]
             attrs["events"] = defaultdict(list)
-            for member in sum(base_values, attrs.values()):
+            for member in sum(base_values, list(attrs.values())):
                 if hasattr(member, "event"):
                     attrs["events"][member.event.name].append(member)
             return type.__new__(cls, name, bases, attrs)
@@ -95,7 +95,7 @@ class BaseBot(BaseIRCClient):
         """
         for message in event.arguments():
             self.log(event, message)
-            command_args = filter(None, message.split())
+            command_args = [_f for _f in message.split() if _f]
             command_name = command_args.pop(0)
             for handler in self.events["command"]:
                 if handler.event.args["command"] == command_name:

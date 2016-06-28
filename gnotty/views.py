@@ -83,7 +83,7 @@ def calendar(request, year=None, month=None, template="gnotty/calendar.html"):
         min_date, max_date = days[0], days[-1]
         days = set(days)
         calendar = Calendar(SUNDAY)
-        for m in range(1, 13) if not month else [int(month)]:
+        for m in list(range(1, 13)) if not month else [int(month)]:
             lt_max = m <= max_date.month or year < max_date.year
             gt_min = m >= min_date.month or year > min_date.year
             if lt_max and gt_min:

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-from __future__ import with_statement
+
 from gevent import monkey, spawn, sleep
 monkey.patch_all()
 
-from Cookie import SimpleCookie
+from http.cookies import SimpleCookie
 from cgi import FieldStorage
 from logging import getLogger, StreamHandler
 from mimetypes import guess_type
@@ -13,7 +13,7 @@ import sys
 from tempfile import gettempdir
 from traceback import format_exc
 
-from daemon import daemonize
+from daemonize import Daemonize
 from socketio import socketio_manage
 from socketio.server import SocketIOServer
 from socketio.namespace import BaseNamespace
@@ -157,10 +157,10 @@ class IRCApplication(object):
             "{% templatetag openvariable %}": "{{",
             "{% templatetag closevariable %}": "}}",
         }
-        for k, v in replace.items():
+        for k, v in list(replace.items()):
             base = base.replace(k, v)
-        for k, v in settings.items():
-            base = base.replace("{{ %s }}" % k, unicode(v or ""))
+        for k, v in list(settings.items()):
+            base = base.replace("{{ %s }}" % k, str(v or ""))
         return base
 
     def respond_django(self, environ):
@@ -201,7 +201,7 @@ class IRCApplication(object):
                 session_key = cookie[cookie_name].value
                 session = Session.objects.get(session_key=session_key)
                 user_id = session.get_decoded().get(SESSION_KEY)
-                user = User.objects.get(id=user_id)
+                user = User.objects.get(id=user_id)  # noqa
             except (ImportError, KeyError, ObjectDoesNotExist):
                 return False
         return True
@@ -226,7 +226,7 @@ class IRCApplication(object):
         response = dispatch(environ)
         if isinstance(response, int):
             response = (response, [], None)
-        elif isinstance(response, basestring):
+        elif isinstance(response, str):  # noqa
             response = (200, [], response)
         status, headers, content = response
         status_text = HTTP_STATUS_TEXT.get(status, "")
@@ -249,7 +249,7 @@ def serve_forever(django=False):
     logger.addHandler(StreamHandler())
     app = IRCApplication(django)
     server = SocketIOServer((settings.HTTP_HOST, settings.HTTP_PORT), app)
-    print "%s [Bot: %s] listening on %s:%s" % (
+    print("%s [Bot: %s] listening on %s:%s") % (
         settings.GNOTTY_VERSION_STRING,
         app.bot.__class__.__name__,
         settings.HTTP_HOST,
@@ -280,15 +280,17 @@ def run():
     pid_file = settings.PID_FILE or os.path.join(gettempdir(), pid_name)
     if settings.KILL:
         if kill(pid_file):
-            print "Daemon killed"
+            print("Daemon killed")
         else:
-            print "Could not kill any daemons"
+            print("Could not kill any daemons")
         return
     elif kill(pid_file):
-        print "Running daemon killed"
+        print("Running daemon killed")
     if settings.DAEMON:
-        daemonize(pid_file)
-    serve_forever()
+        daemon = Daemonize(app="gnotty", pid=pid_file, action=serve_forever)
+        daemon.start()
+    else:
+        serve_forever()
 
 
 if __name__ == "__main__":

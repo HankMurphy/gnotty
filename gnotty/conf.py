@@ -1,5 +1,5 @@
 
-from __future__ import with_statement
+
 import logging
 from optparse import OptionParser, OptionGroup
 import sys
@@ -78,7 +78,7 @@ class Settings(dict):
         self["GNOTTY_PROJECT_URL"] = __url__
         try:
             from django.conf import settings
-            for k, v in parser.defaults.items():
+            for k, v in list(parser.defaults.items()):
                 self[k] = getattr(settings, "GNOTTY_%s" % k, v)
             self.set_max_message_length()
         except ImportError:
@@ -102,7 +102,7 @@ class Settings(dict):
         options, _ = parser.parse_args()
         file_settings = {}
         if options.CONF_FILE:
-            execfile(options.CONF_FILE, {}, file_settings)
+            exec(compile(open(options.CONF_FILE).read(), options.CONF_FILE, 'exec'), {}, file_settings)
         for option in self.option_list:
             if option.dest:
                 file_value = file_settings.get("GNOTTY_%s" % option.dest, None)

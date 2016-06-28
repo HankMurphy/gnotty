@@ -2,7 +2,7 @@
 import sys
 import os
 
-from settings import PROJECT_ROOT
+from .settings import PROJECT_ROOT
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 os.chdir(PROJECT_ROOT)
